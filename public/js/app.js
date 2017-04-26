@@ -9,9 +9,12 @@ socket.on('connect', (socket) => {
 socket.on('message', (message) => {
   const $message = jQuery('.messages');
   const timeStamp = moment.utc(message.timeStamp);
+  const $roomName = jQuery('.room-name');
+
+  $roomName.append(` ${room }` || 'System');
 
   $message
-    .append(`<p><strong>${timeStamp.local().format('hh:mm a')} ${message.name}</strong></p>`);
+    .append(`<p><strong>${message.name} ${timeStamp.local().format('hh:mm a')}</strong></p>`);
   $message
     .append(`<p>${message.text}</p>`);
 
@@ -32,6 +35,7 @@ function getQueryParams(value) {
   const query = window.location.search.substring(1).split('&');
   for (let item of query) {
     let pair = item.split('=');
-    if (pair[0] === value) return decodeURIComponent(pair[1]);
+    if (pair[0] === value) return decodeURIComponent(pair[1]).replace(/\+/g, ' ');
   }
+  return undefined;
 }
