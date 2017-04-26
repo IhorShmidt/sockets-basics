@@ -1,3 +1,5 @@
+'use strict';
+
 const PORT = process.env.PORT || 3000,
   express = require('express'),
   app = express(),
@@ -9,11 +11,22 @@ const dictionary = {
   greetings: 'Welcome to chat Application',
   system: 'System',
   connection: 'connection',
+  joinRoom: 'joinRoom',
   message: 'message'
 };
 
+let clientInfo = {};
+
 io.on(dictionary.connection, (socket) => {
   console.log('connected via socket.io');
+
+  socket.on(dictionary.joinRoom, (req) => {
+    clientInfo[socket.id] = req.room;
+    socket.join(req.room);
+    socket.broadcast.to(req.room).emit(dictionary.message, {
+      name: dictionary.system, text: `${req.name} has joined!`, timeStamp: moment.valueOf()
+    });
+  });
 
   socket.on(dictionary.message, (message) => {
     /** This is for sending all users from page without current
@@ -21,7 +34,7 @@ io.on(dictionary.connection, (socket) => {
      */
 
     message.timeStamp = moment.valueOf();
-    io.emit(dictionary.message, message);
+    io.to(clientInfo[socket.id].room).emit(dictionary.message, message);
   });
 
   socket.emit(dictionary.message, {text: dictionary.greetings, name: dictionary.system});

@@ -2,8 +2,9 @@ const socket = io();
 const name = getQueryParams('name'),
   room = getQueryParams('room');
 
-socket.on('connect', (socket) => {
+socket.on('connect', () => {
   console.log('connected via socket');
+  socket.emit('joinRoom', {name, room});
 });
 
 socket.on('message', (message) => {
