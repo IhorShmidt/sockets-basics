@@ -18,6 +18,30 @@ const dictionary = {
 
 let clientInfo = {};
 
+// Sends current users to provided socket
+function sendCurrentUsers (socket) {
+  const info = clientInfo[socket.id];
+  const users = [];
+
+  if (typeof info === 'undefined') {
+    return;
+  }
+
+  Object.keys(clientInfo).forEach(function (socketId) {
+    const userInfo = clientInfo[socketId];
+
+    if (info.room === userInfo.room) {
+      users.push(userInfo.name);
+    }
+  });
+
+  socket.emit('message', {
+    name: 'System',
+    text: 'Current users: ' + users.join(', '),
+    timestamp: moment().valueOf()
+  });
+}
+
 io.on(dictionary.connection, (socket) => {
   console.log('connected via socket.io');
 
@@ -48,8 +72,13 @@ io.on(dictionary.connection, (socket) => {
      socket.broadcast.emit(dictionary.message, message);
      */
 
-    message.timeStamp = moment.valueOf();
-    io.to(clientInfo[socket.id].room).emit(dictionary.message, message);
+    if (message.text === '@currentUsers') {
+      sendCurrentUsers(socket);
+    } else {
+      message.timestamp = moment().valueOf();
+      io.to(clientInfo[socket.id].room).emit('message', message);
+    }
+
   });
 
   socket.emit(dictionary.message, {text: dictionary.greetings, name: dictionary.system});
