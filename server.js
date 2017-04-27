@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 3000,
 const dictionary = {
   greetings: 'Welcome to chat Application',
   system: 'System',
+  disconnect: 'disconnect',
   connection: 'connection',
   joinRoom: 'joinRoom',
   message: 'message'
@@ -20,8 +21,22 @@ let clientInfo = {};
 io.on(dictionary.connection, (socket) => {
   console.log('connected via socket.io');
 
+  socket.on(dictionary.disconnect, () => {
+    const userData = clientInfo[socket.id];
+    if (typeof userData !== 'undefined') {
+      socket.leave(userData.room);
+
+      io.to(userData.room).emit(dictionary.message, {
+        text: `${userData.name} has left.`,
+        timeStamp: moment.valueOf(),
+        name: dictionary.system
+      });
+      delete clientInfo[socket.id];
+    }
+  });
+
   socket.on(dictionary.joinRoom, (req) => {
-    clientInfo[socket.id] = req.room;
+    clientInfo[socket.id] = req;
     socket.join(req.room);
     socket.broadcast.to(req.room).emit(dictionary.message, {
       name: dictionary.system, text: `${req.name} has joined!`, timeStamp: moment.valueOf()
